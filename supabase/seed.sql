@@ -2,8 +2,6 @@
 -- BARAKA FOOD — Seed Data pour l'Algérie (Alger, Oran, etc.)
 -- ==============================================================================
 
--- Profils de test (exemples pour le développement)
--- Note: Dans un environnement réel Supabase, ces IDs viennent de auth.users
 DO $$
 DECLARE
     v_boulangerie_cat UUID;
@@ -20,13 +18,78 @@ DECLARE
     v_biz2_id UUID := 'a2222222-2222-2222-2222-222222222222';
     v_biz3_id UUID := 'a3333333-3333-3333-3333-333333333333';
 BEGIN
+    -- 1. Création des comptes de test dans auth.users
+    INSERT INTO auth.users (
+        id, 
+        instance_id,
+        aud, 
+        role, 
+        email, 
+        encrypted_password, 
+        email_confirmed_at, 
+        raw_app_meta_data, 
+        raw_user_meta_data, 
+        created_at, 
+        updated_at
+    )
+    VALUES
+    (
+        v_biz_owner1, 
+        '00000000-0000-0000-0000-000000000000',
+        'authenticated', 
+        'authenticated', 
+        'artisan@barakafood.dz', 
+        crypt('barakafood31!', gen_salt('bf')), 
+        NOW(), 
+        '{"provider":"email","providers":["email"]}', 
+        '{"role":"business","full_name":"Boulangerie L''Artisan d''Alger","phone":"0550123456"}', 
+        NOW(), 
+        NOW()
+    ),
+    (
+        v_biz_owner2, 
+        '00000000-0000-0000-0000-000000000000',
+        'authenticated', 
+        'authenticated', 
+        'larose@barakafood.dz', 
+        crypt('barakafood31!', gen_salt('bf')), 
+        NOW(), 
+        '{"provider":"email","providers":["email"]}', 
+        '{"role":"business","full_name":"Pâtisserie La Rose de Bab Ezzouar","phone":"0661987654"}', 
+        NOW(), 
+        NOW()
+    ),
+    (
+        v_biz_owner3, 
+        '00000000-0000-0000-0000-000000000000',
+        'authenticated', 
+        'authenticated', 
+        'burger@barakafood.dz', 
+        crypt('barakafood31!', gen_salt('bf')), 
+        NOW(), 
+        '{"provider":"email","providers":["email"]}', 
+        '{"role":"business","full_name":"Burger & Co Sidi Yahia","phone":"0770334455"}', 
+        NOW(), 
+        NOW()
+    )
+    ON CONFLICT (id) DO NOTHING;
+
+    -- Assurer que les profils existent
+    INSERT INTO public.profiles (id, role, full_name, phone)
+    VALUES 
+    (v_biz_owner1, 'business', 'Boulangerie L''Artisan d''Alger', '0550123456'),
+    (v_biz_owner2, 'business', 'Pâtisserie La Rose de Bab Ezzouar', '0661987654'),
+    (v_biz_owner3, 'business', 'Burger & Co Sidi Yahia', '0770334455')
+    ON CONFLICT (id) DO NOTHING;
+
+    -- 2. Récupération des catégories
     SELECT id INTO v_boulangerie_cat FROM public.categories WHERE name = 'Boulangeries' LIMIT 1;
     SELECT id INTO v_patisserie_cat FROM public.categories WHERE name = 'Pâtisseries' LIMIT 1;
     SELECT id INTO v_fastfood_cat FROM public.categories WHERE name = 'Fast-food' LIMIT 1;
     SELECT id INTO v_restaurant_cat FROM public.categories WHERE name = 'Restaurants' LIMIT 1;
     SELECT id INTO v_supermarche_cat FROM public.categories WHERE name = 'Supermarchés' LIMIT 1;
 
-    -- Création d'entreprises partenaires d'exemple à Alger
+    -- 3. Entreprises partenaires à Alger
     INSERT INTO public.businesses (id, owner_id, name, description, category_id, phone, address, wilaya, latitude, longitude, status, opening_hours)
     VALUES
     (
@@ -73,8 +136,9 @@ BEGIN
     )
     ON CONFLICT (id) DO NOTHING;
 
-    -- Offres de paniers surprise d'exemple
+    -- 4. Paniers surprise
     INSERT INTO public.offers (
+        id,
         business_id,
         name,
         description,
@@ -88,6 +152,7 @@ BEGIN
     )
     VALUES
     (
+        'f1111111-1111-1111-1111-111111111111',
         v_biz1_id,
         'Panier Pains & Viennoiseries',
         'Assortiment de 2 baguettes tradition, 3 croissants au beurre et 2 pains au chocolat du jour.',
@@ -100,6 +165,7 @@ BEGIN
         'available'
     ),
     (
+        'f2222222-2222-2222-2222-222222222222',
         v_biz2_id,
         'Panier Pâtisseries & Douceurs',
         'Sélection de 4 parts de gâteaux variés (mille-feuille, éclair café, tarte citron) encore ultra frais.',
@@ -112,6 +178,7 @@ BEGIN
         'available'
     ),
     (
+        'f3333333-3333-3333-3333-333333333333',
         v_biz3_id,
         'Panier Fast-Food du Soir',
         '1 burger gourmet + portions de frites + sauces maison préparés pour le service.',
@@ -122,5 +189,6 @@ BEGIN
         NOW() + INTERVAL '1 hour',
         NOW() + INTERVAL '5 hours',
         'available'
-    );
+    )
+    ON CONFLICT (id) DO NOTHING;
 END $$;

@@ -270,51 +270,63 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: lecture par tout utilisateur authentifié, modification uniquement de son propre profil
+DROP POLICY IF EXISTS "Profiles are viewable by authenticated users" ON public.profiles;
 CREATE POLICY "Profiles are viewable by authenticated users" 
 ON public.profiles FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" 
 ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
 
 -- Categories: consultable par tout le monde
+DROP POLICY IF EXISTS "Categories viewable by everyone" ON public.categories;
 CREATE POLICY "Categories viewable by everyone" 
 ON public.categories FOR SELECT USING (true);
 
 -- Businesses: visibles si actives (ou si propriétaire)
+DROP POLICY IF EXISTS "Active businesses viewable by all" ON public.businesses;
 CREATE POLICY "Active businesses viewable by all" 
 ON public.businesses FOR SELECT USING (status = 'active' OR auth.uid() = owner_id);
 
+DROP POLICY IF EXISTS "Owners can insert business" ON public.businesses;
 CREATE POLICY "Owners can insert business" 
 ON public.businesses FOR INSERT TO authenticated WITH CHECK (auth.uid() = owner_id);
 
+DROP POLICY IF EXISTS "Owners can update own business" ON public.businesses;
 CREATE POLICY "Owners can update own business" 
 ON public.businesses FOR UPDATE TO authenticated USING (auth.uid() = owner_id);
 
 -- Subscriptions: visibles par le propriétaire de l'entreprise
+DROP POLICY IF EXISTS "Business owners can view own subscription" ON public.subscriptions;
 CREATE POLICY "Business owners can view own subscription" 
 ON public.subscriptions FOR SELECT TO authenticated 
 USING (EXISTS (SELECT 1 FROM public.businesses WHERE businesses.id = subscriptions.business_id AND businesses.owner_id = auth.uid()));
 
 -- Offers: visibles si disponibles (ou si propriétaire de l'entreprise)
+DROP POLICY IF EXISTS "Available offers viewable by all" ON public.offers;
 CREATE POLICY "Available offers viewable by all" 
 ON public.offers FOR SELECT USING (
     status = 'available' 
     OR EXISTS (SELECT 1 FROM public.businesses WHERE businesses.id = offers.business_id AND businesses.owner_id = auth.uid())
 );
 
+DROP POLICY IF EXISTS "Owners can insert offers" ON public.offers;
 CREATE POLICY "Owners can insert offers" 
 ON public.offers FOR INSERT TO authenticated 
 WITH CHECK (EXISTS (SELECT 1 FROM public.businesses WHERE businesses.id = offers.business_id AND businesses.owner_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Owners can update offers" ON public.offers;
 CREATE POLICY "Owners can update offers" 
 ON public.offers FOR UPDATE TO authenticated 
 USING (EXISTS (SELECT 1 FROM public.businesses WHERE businesses.id = offers.business_id AND businesses.owner_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Owners can delete offers" ON public.offers;
 CREATE POLICY "Owners can delete offers" 
 ON public.offers FOR DELETE TO authenticated 
 USING (EXISTS (SELECT 1 FROM public.businesses WHERE businesses.id = offers.business_id AND businesses.owner_id = auth.uid()));
 
 -- Sales: visibles par le client ou le commerçant concerné
+DROP POLICY IF EXISTS "Sales viewable by parties" ON public.sales;
 CREATE POLICY "Sales viewable by parties" 
 ON public.sales FOR SELECT TO authenticated 
 USING (
@@ -322,35 +334,44 @@ USING (
     OR EXISTS (SELECT 1 FROM public.businesses WHERE businesses.id = sales.business_id AND businesses.owner_id = auth.uid())
 );
 
+DROP POLICY IF EXISTS "Business owners can insert sales" ON public.sales;
 CREATE POLICY "Business owners can insert sales" 
 ON public.sales FOR INSERT TO authenticated 
 WITH CHECK (EXISTS (SELECT 1 FROM public.businesses WHERE businesses.id = sales.business_id AND businesses.owner_id = auth.uid()));
 
 -- Favorites: chaque client gère ses favoris
+DROP POLICY IF EXISTS "Users can view own favorites" ON public.favorites;
 CREATE POLICY "Users can view own favorites" 
 ON public.favorites FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own favorites" ON public.favorites;
 CREATE POLICY "Users can insert own favorites" 
 ON public.favorites FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own favorites" ON public.favorites;
 CREATE POLICY "Users can delete own favorites" 
 ON public.favorites FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- Reviews: lecture publique, insertion si client
+DROP POLICY IF EXISTS "Reviews viewable by everyone" ON public.reviews;
 CREATE POLICY "Reviews viewable by everyone" 
 ON public.reviews FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can write reviews" ON public.reviews;
 CREATE POLICY "Users can write reviews" 
 ON public.reviews FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 -- Notifications: lecture de ses propres notifications
+DROP POLICY IF EXISTS "Users can view own notifications" ON public.notifications;
 CREATE POLICY "Users can view own notifications" 
 ON public.notifications FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notifications;
 CREATE POLICY "Users can update own notifications" 
 ON public.notifications FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
 -- Reports: insertion par tout utilisateur
+DROP POLICY IF EXISTS "Users can insert reports" ON public.reports;
 CREATE POLICY "Users can insert reports" 
 ON public.reports FOR INSERT TO authenticated WITH CHECK (auth.uid() = reporter_id);
 
